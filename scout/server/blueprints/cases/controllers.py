@@ -46,7 +46,12 @@ from scout.parse.matchmaker import genomic_features, hpo_terms, omim_terms, pars
 from scout.server.blueprints.variant.controllers import variant as variant_decorator
 from scout.server.blueprints.variants.controllers import get_manual_assessments
 from scout.server.extensions import RerunnerError, bionano_access, gens, matchmaker, rerunner, store
-from scout.server.utils import case_has_alignments, case_has_mt_alignments, institute_and_case
+from scout.server.utils import (
+    case_has_alignments,
+    case_has_mt_alignments,
+    case_has_rna_tracks,
+    institute_and_case,
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -377,8 +382,7 @@ def case(store, institute_obj, case_obj):
 
     if case_obj.get("custom_images"):
         # re-encode images as base64
-        if "case" in case_obj.get("custom_images"):
-            case_obj["custom_images"] = case_obj["custom_images"]["case"]
+        case_obj["custom_images"] = case_obj["custom_images"].get("case_images", {})
         for img_section in case_obj["custom_images"].keys():
             for img in case_obj["custom_images"][img_section]:
                 img["data"] = b64encode(img["data"]).decode("utf-8")
@@ -421,6 +425,7 @@ def case(store, institute_obj, case_obj):
         "causatives": causatives,
         "evaluated_variants": evaluated_variants,
         "partial_causatives": partial_causatives,
+        "has_rna_tracks": case_has_rna_tracks(case_obj),
         "collaborators": collab_ids,
         "cohort_tags": institute_obj.get("cohorts", []),
         "omim_terms": omim_terms,
